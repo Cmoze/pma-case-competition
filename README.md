@@ -112,6 +112,6 @@ Stack: React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui, React Router.
 4. Commit and push: `git add -A`, `git commit -m "Short description of the fix"`, `git push origin team-name-fix`.
 5. On GitHub, open your fork and click **Compare & pull request**. Make sure the base repository is `danielwait2/pma-case-competition` and the base branch is `main`.
 6. Put your team name in the title. In the description, paste your spec: the problem, your evidence, what you built, what you did not build, and the metric you would watch.
-7. Share the pull request link through the submission link your facilitator gives you at the event.
+7. Submit the pull request link at https://pma-website-bay.vercel.app/submit.
 
 Small, focused pull requests are easier to judge than big ones. A checks run builds every pull request automatically; a red check means the build broke.

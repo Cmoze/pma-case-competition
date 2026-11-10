@@ -202,7 +202,14 @@ const CasePage = () => {
               <p className="text-sm text-white/80 mb-3">
                 Share your prototype link, artifact link, or pull request along with your team name.
               </p>
-              <p className="text-sm font-semibold">Your facilitator will share the submission link at the start of the event.</p>
+              <a
+                href="https://pma-website-bay.vercel.app/submit"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block rounded-lg bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-white/90"
+              >
+                Submit your team's work
+              </a>
             </div>
           </div>
         </AnimatedSection>
