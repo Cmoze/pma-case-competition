@@ -23,10 +23,23 @@ const DELIVERABLES = [
   { title: "Something shipped", body: "A working change, a clickable prototype, or a pull request. Rough is fine." },
 ];
 
+const START_PROMPT =
+  "Using these files, count distinct user_id with event = page_view and path = /resources per Sunday to Saturday week starting Oct 11, using local dates and ignoring Nov 8 to 9. You should get 41, 33, 30, 23. Then list three possible reasons it fell, each with one number and one quote.";
+
+const CLOCK = [
+  { time: "0:00", what: "Framing. Track 3 teams fork and run npm install now." },
+  { time: "0:07", what: "Discover with AI. Around 0:17 we share more evidence." },
+  { time: "0:22", what: "Pick one problem and write a five line spec." },
+  { time: "0:25", what: "Build and ship." },
+  { time: "0:46", what: "Submit your link." },
+  { time: "0:48", what: "Judging." },
+];
+
 const TRACKS = [
   {
     level: "Beginner",
     title: "Chat AI",
+    ship: "A shared ChatGPT or Claude chat, or a Google Doc set to anyone with the link, with your spec plus a mock or the message you'd send users.",
     steps: [
       "Click around this site like a student would. Try the demo login to see the members view.",
       "Download the case kit.",
@@ -37,6 +50,7 @@ const TRACKS = [
   {
     level: "Builder",
     title: "Prototype",
+    ship: "A Lovable, v0, or artifact link. Tip: paste a screenshot of the part of /resources you're changing, plus your spec.",
     steps: [
       "Do the analysis from the Beginner track.",
       "Describe your fix to Lovable, v0, or a Claude artifact.",
@@ -46,6 +60,7 @@ const TRACKS = [
   {
     level: "Advanced",
     title: "Pull request",
+    ship: "A GitHub pull request link with your spec and a screenshot in the description.",
     steps: [
       "Fork the repo on GitHub and clone your fork.",
       "Run npm install, then npm run dev, and open the local site.",
@@ -73,6 +88,59 @@ const CasePage = () => {
             </p>
           </div>
         </AnimatedSection>
+
+        <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-6 mb-10">
+          <div className="md:col-span-3 rounded-2xl border-2 border-primary bg-card p-6 md:p-8">
+            <h2 className="text-2xl font-bold mb-4">Start here</h2>
+            <ol className="space-y-3 text-sm md:text-base list-decimal list-inside">
+              <li>
+                <a href="/case-kit.zip" download className="text-primary underline">
+                  Download the case kit
+                </a>
+                .
+              </li>
+              <li>
+                One teammate signs in as{" "}
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">{DEMO_MEMBER_EMAIL}</code> /{" "}
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">{DEMO_MEMBER_PASSWORD}</code> and clicks around{" "}
+                <Link to="/resources" className="text-primary underline">
+                  Resources
+                </Link>
+                .
+              </li>
+              <li>
+                Upload the files to your AI (ChatGPT takes the zip; for Claude, unzip first) and paste this prompt:
+                <p className="mt-2 rounded-lg bg-muted p-3 text-xs md:text-sm text-muted-foreground select-all">
+                  {START_PROMPT}
+                </p>
+              </li>
+              <li>Around 0:17 we share more evidence. Use it to explain why, not to switch problems.</li>
+              <li>
+                By 0:46, one person submits any shareable link at{" "}
+                <a
+                  href="https://pma-website-bay.vercel.app/submit"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary underline"
+                >
+                  the submission form
+                </a>
+                .
+              </li>
+            </ol>
+          </div>
+          <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6 md:p-8">
+            <h2 className="text-2xl font-bold mb-4">Today's clock</h2>
+            <ul className="space-y-3 text-sm">
+              {CLOCK.map((c) => (
+                <li key={c.time} className="flex gap-3">
+                  <span className="font-mono font-semibold w-10 shrink-0">{c.time}</span>
+                  <span className="text-muted-foreground">{c.what}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
 
         <AnimatedSection animation="slide-up" delay={100}>
           <div className="max-w-3xl mx-auto rounded-2xl border border-border bg-card p-6 md:p-8 mb-10">
@@ -160,6 +228,10 @@ const CasePage = () => {
                       <li key={s}>{s}</li>
                     ))}
                   </ol>
+                  <p className="mt-4 text-sm">
+                    <span className="font-semibold text-foreground">You ship: </span>
+                    <span className="text-muted-foreground">{t.ship}</span>
+                  </p>
                   {t.level === "Advanced" && (
                     <a
                       href={REPO_URL}

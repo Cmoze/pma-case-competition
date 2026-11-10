@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "kit:zip": "command -v zip >/dev/null 2>&1 || { echo \"zip not found, keeping existing public/case-kit.zip\"; exit 0; }; rm -f public/case-kit.zip && zip -rqX public/case-kit.zip case-kit -x \"*.DS_Store\"",
-    "prebuild": "npm run kit:zip",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

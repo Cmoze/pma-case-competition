@@ -109,7 +109,7 @@ Stack: React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui, React Router.
 1. In your fork, make a branch: `git checkout -b team-name-fix`.
 2. Make your change and check it in the browser with `npm run dev`.
 3. Run `npm run build` to make sure it builds.
-4. Commit and push: `git add -A`, `git commit -m "Short description of the fix"`, `git push origin team-name-fix`.
+4. Commit and push: `git add src`, `git commit -m "Short description of the fix"`, `git push origin team-name-fix`. Only commit your code changes, never `public/case-kit.zip`.
 5. On GitHub, open your fork and click **Compare & pull request**. Make sure the base repository is `danielwait2/pma-case-competition` and the base branch is `main`.
 6. Put your team name in the title. In the description, paste your spec: the problem, your evidence, what you built, what you did not build, and the metric you would watch.
 7. Submit the pull request link at https://pma-website-bay.vercel.app/submit.

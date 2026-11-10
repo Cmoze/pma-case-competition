@@ -21,9 +21,9 @@ PMA wants students to come back to Resources every week during recruiting season
 
 It fell from 41 to 23 over the last 30 days. Recruiting season peaks in about three weeks, so this is the worst possible time for the number to drop.
 
-## Your job in 60 minutes
+## Your job
 
-Use the data, the user interviews, and any AI tools you like to find out why engagement is slipping, then ship a fix. Your team presents four things:
+You have about 40 minutes of work time. Use the data, the user interviews, and any AI tools you like to find out why engagement is slipping, then ship a fix. Your team presents four things:
 
 1. **Problem.** One or two sentences naming the most important reason the north star is falling. Pick one. Saying "everything" is not an answer.
 2. **Evidence.** At least one number you computed from the data and at least one quote from an interview or the feedback. Say how you got the number.
@@ -32,15 +32,17 @@ Use the data, the user interviews, and any AI tools you like to find out why eng
 
 Watch out: not every scary chart is the cause, and not every loud request is the right thing to build.
 
-### Suggested timeline
+### Today's clock
 
-| Minutes | What to do |
+| Room clock | What to do |
 | --- | --- |
-| 0 to 15 | Read this brief, skim the files, ask AI to summarize the data |
-| 15 to 30 | Form a hypothesis and test it against the data and interviews |
-| 30 to 40 | Write the spec |
-| 40 to 55 | Build and ship |
-| 55 to 60 | Prepare a two minute pitch |
+| 0:00 to 0:07 | Framing. Listen, and Track 3 teams start npm install now |
+| 0:07 to 0:22 | Discover. Analyze the data and interviews with AI. Around 0:17 facilitators share more evidence |
+| 0:22 to 0:25 | Pick one problem and write a five line spec |
+| 0:25 to 0:46 | Build and ship |
+| 0:46 | Submit your link at https://pma-website-bay.vercel.app/submit |
+| 0:48 | Judging. Three or four teams present for two minutes each |
+| 0:58 | Wrap |
 
 ## What is in the kit
 

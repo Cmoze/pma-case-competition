@@ -33,3 +33,9 @@ Follow `docs/BRAND_STYLE_GUIDE.md` for any new UI. Reuse the Tailwind theme toke
 ## Pull requests
 
 Keep PRs small and focused on one fix. Do not reformat unrelated files. Put the team's spec (problem, evidence, what changed, metric to watch) in the PR description.
+
+## Gotchas
+
+* The `/resources` lock screen is `src/components/LockedResourcesView.tsx`. `MemberLockout.tsx` and `RoadmapPage.tsx` are legacy and not on the main path.
+* `npm run lint` has 13 existing warnings. Ignore them; only errors fail CI.
+* Do not commit `public/case-kit.zip`.
