@@ -1,0 +1,531 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { MessageSquare } from 'lucide-react';
+import AnimatedSection from '@/components/AnimatedSection';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/localDb';
+import { useEvents, type Event } from '@/hooks/useEvents';
+
+const EventsPage = () => {
+  const [filter, setFilter] = useState('upcoming');
+  const [selectedFlyer, setSelectedFlyer] = useState<string | null>(null);
+  const [suggestionDialogOpen, setSuggestionDialogOpen] = useState(false);
+  const [suggestionTitle, setSuggestionTitle] = useState('');
+  const [suggestionDescription, setSuggestionDescription] = useState('');
+  const [suggestionEmail, setSuggestionEmail] = useState('');
+  const [suggestionSubmitting, setSuggestionSubmitting] = useState(false);
+
+  const { toast } = useToast();
+  const { data: events = [], isLoading: loading, error, refetch } = useEvents();
+
+  // Format date nicely
+  // const formatDate = (dateString: string) => {
+  //   const options: Intl.DateTimeFormatOptions = { 
+  //     weekday: 'long', 
+  //     year: 'numeric', 
+  //     month: 'long', 
+  //     day: 'numeric',
+  //     hour: '2-digit',
+  //     minute: '2-digit'
+  //   };
+  //   return new Date(dateString).toLocaleDateString('en-US', options);
+  // };
+
+  // Generate calendar URLs for different platforms
+  const generateCalendarUrls = (event: Event) => {
+    const startDate = new Date(event.date);
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // 1 hour duration
+    
+    const formatDateForCalendar = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+    
+    const formatDateForOutlook = (date: Date) => {
+      return date.toISOString();
+    };
+    
+    // Description with registration link so it appears in calendar event details
+    const detailsForCalendar = event.registrationLink
+      ? `${event.description}\n\nRegister: ${event.registrationLink}`
+      : event.description;
+    
+    // Extract Google Meet link from description if present
+    const meetLinkMatch = event.description.match(/(https:\/\/meet\.google\.com\/[a-z-]+)/i);
+    const meetLink = meetLinkMatch ? meetLinkMatch[1] : '';
+    
+    // Combine physical location and online meeting link
+    const fullLocation = meetLink ? `${event.location} | Online: ${meetLink}` : event.location;
+    
+    // Google Calendar
+    const googleParams = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: event.title,
+      dates: `${formatDateForCalendar(startDate)}/${formatDateForCalendar(endDate)}`,
+      details: detailsForCalendar,
+      location: fullLocation,
+    });
+    
+    // Outlook Calendar
+    const outlookParams = new URLSearchParams({
+      path: '/calendar/action/compose',
+      rru: 'addevent',
+      subject: event.title,
+      startdt: formatDateForOutlook(startDate),
+      enddt: formatDateForOutlook(endDate),
+      body: detailsForCalendar,
+      location: fullLocation,
+    });
+    
+    // Yahoo Calendar
+    const yahooParams = new URLSearchParams({
+      v: '60',
+      title: event.title,
+      st: formatDateForCalendar(startDate),
+      et: formatDateForCalendar(endDate),
+      desc: detailsForCalendar,
+      in_loc: fullLocation,
+    });
+    
+    // Escape DESCRIPTION for iCal: backslash, semicolon, comma
+    const escapeIcsDescription = (s: string) =>
+      s.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+    const icsDescription = escapeIcsDescription(detailsForCalendar);
+    
+    // ICS file for Apple Calendar and others
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `DTSTART:${formatDateForCalendar(startDate)}`,
+      `DTEND:${formatDateForCalendar(endDate)}`,
+      `SUMMARY:${event.title}`,
+      `DESCRIPTION:${icsDescription}`,
+      `LOCATION:${fullLocation}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\n');
+    
+    return {
+      google: `https://calendar.google.com/calendar/render?${googleParams.toString()}`,
+      outlook: `https://outlook.live.com/calendar/0/action/compose?${outlookParams.toString()}`,
+      yahoo: `https://calendar.yahoo.com/?${yahooParams.toString()}`,
+      ics: `data:text/calendar;charset=utf-8,${encodeURIComponent(icsContent)}`,
+    };
+  };
+
+  // Filter and sort events
+  const getFilteredEvents = () => {
+    const now = new Date();
+    
+    if (filter === 'past') {
+      // Past events: most recent to oldest
+      return events
+        .filter(event => new Date(event.date) < now)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    } else {
+      // Upcoming events: soonest to latest
+      return events
+        .filter(event => new Date(event.date) >= now)
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24 pb-20 bg-background text-foreground">
+        <div className="container mx-auto px-4 md:px-6">
+          <AnimatedSection animation="slide-up">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                Upcoming <span className="text-gradient">Events</span>
+              </h1>
+              <p className="text-lg text-muted-foreground">
+                Join us for workshops, speakers, and networking opportunities.
+              </p>
+            </div>
+          </AnimatedSection>
+          
+          <div className="grid grid-cols-1 gap-6">
+            {[...Array(5)].map((_, index) => (
+              <div key={index} className="bg-card/80 border border-border rounded-lg p-6 backdrop-blur-sm animate-pulse">
+                <div className="flex flex-col md:flex-row">
+                  <div className="md:w-64 p-6 bg-gradient-to-br from-primary/30 to-secondary/30">
+                    <div className="h-4 bg-muted rounded mb-2"></div>
+                    <div className="h-3 bg-muted rounded"></div>
+                  </div>
+                  <div className="flex-1 p-6">
+                    <div className="h-6 bg-muted rounded mb-2"></div>
+                    <div className="h-4 bg-muted rounded mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-3/4"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen pt-24 pb-20 bg-background text-foreground">
+        <div className="container mx-auto px-4 md:px-6">
+          <AnimatedSection animation="slide-up">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <h1 className="text-4xl md:text-5xl font-bold mb-6">
+                Upcoming <span className="text-gradient">Events</span>
+              </h1>
+              <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-6">
+                <p className="text-red-300">
+                  {error || "Failed to load events data. Please try again later."}
+                </p>
+                <button 
+                  onClick={() => refetch()} 
+                  className="mt-4 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </AnimatedSection>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pt-24 pb-20 bg-background text-foreground">
+      <div className="container mx-auto px-4 md:px-6">
+        <AnimatedSection animation="slide-up">
+          <div className="max-w-3xl mx-auto text-center mb-16">
+            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+              Upcoming <span className="text-gradient">Events</span>
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Join us for workshops, speakers, and networking opportunities.
+            </p>
+            <Button asChild size="lg" className="mt-8 bg-gradient-to-r from-primary to-secondary !text-white hover:opacity-90 drop-shadow-md">
+              <Link to="/events/ask">
+                <span className="relative flex h-2 w-2 mr-1">
+                  <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                </span>
+                Live event: Ask a question
+                <MessageSquare className="w-4 h-4 ml-1" />
+              </Link>
+            </Button>
+          </div>
+        </AnimatedSection>
+
+        <AnimatedSection animation="fade-in" delay={50}>
+          <div className="flex justify-center mb-16">
+            <iframe
+              src="https://luma.com/embed/calendar/cal-82eg3LzQnk5FD0J/events"
+              width="600"
+              height="450"
+              frameBorder="0"
+              style={{ border: "1px solid #bfcbda88", borderRadius: "4px" }}
+              allowFullScreen
+              aria-hidden="false"
+              tabIndex={0}
+              className="w-full max-w-[600px]"
+              title="BYU PMA Luma Calendar"
+            />
+          </div>
+        </AnimatedSection>
+
+        <AnimatedSection animation="slide-up" delay={100}>
+          <div className="flex justify-center mb-12">
+            <div className="inline-flex bg-card/50 rounded-lg p-1 backdrop-blur-sm">
+              <button 
+                onClick={() => setFilter('upcoming')}
+                className={`px-4 py-2 rounded-lg transition-all ${
+                  filter === 'upcoming'
+                    ? 'bg-gradient-to-r from-primary to-secondary !text-white drop-shadow-md'
+                    : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Upcoming
+              </button>
+              <button 
+                onClick={() => setFilter('past')}
+                className={`px-4 py-2 rounded-lg transition-all ${
+                  filter === 'past'
+                    ? 'bg-gradient-to-r from-primary to-secondary !text-white drop-shadow-md'
+                    : 'bg-muted/50 text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Past
+              </button>
+            </div>
+          </div>
+          
+          <div className="mb-8">
+            <div className="grid grid-cols-1 gap-6">
+              {getFilteredEvents().map((event, index) => (
+                <AnimatedSection key={event.id} animation="fade-in" delay={index * 100}>
+                  <Card className="bg-card/80 border border-border backdrop-blur-sm hover:bg-card/90 transition-all">
+                    <CardContent className="p-0">
+                      <div className="flex flex-col md:flex-row">
+                        {/* Date Section */}
+                        <div className="md:w-48 p-6 bg-gradient-to-br from-primary/30 to-secondary/30 flex flex-col justify-center items-center md:items-start text-center md:text-left">
+                          <div className="text-lg font-semibold mb-1">{new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</div>
+                          <div className="text-sm text-muted-foreground">{new Date(event.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                        
+                        {/* Event Details */}
+                        <div className="flex-1 p-6">
+                          <h3 className="text-xl font-bold mb-2">{event.title}</h3>
+                          <p className="text-muted-foreground mb-3">{event.description}</p>
+                          <div className="flex items-center text-sm text-muted-foreground mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-1">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                            </svg>
+                            {event.location}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {event.registrationLink && (
+                              <a
+                                href={event.registrationLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary !text-white hover:opacity-90 text-sm drop-shadow-md px-4 py-2 rounded-md font-medium"
+                              >
+                                Register on Luma
+                              </a>
+                            )}
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-secondary !text-white hover:opacity-90 text-sm drop-shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+                                </svg>
+                                Add to Calendar
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              <DropdownMenuItem asChild>
+                                <a href={generateCalendarUrls(event).google} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                                  Google Calendar
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={generateCalendarUrls(event).outlook} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                                  Outlook Calendar
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={generateCalendarUrls(event).yahoo} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                                  Yahoo Calendar
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={generateCalendarUrls(event).ics} download={`${event.title}.ics`} className="cursor-pointer">
+                                  Apple Calendar (Download)
+                                </a>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          </div>
+                        </div>
+                        
+                        {/* Event Image/Attachment - Right Side */}
+                        <div className="md:w-64 p-6 flex items-center justify-center">
+                          {event.img ? (
+                            <div className="w-full h-48 md:h-40">
+                              <img 
+                                src={event.img} 
+                                alt={event.title}
+                                className="w-full h-full object-cover rounded-lg cursor-pointer hover:opacity-90 transition-opacity shadow-lg"
+                                onClick={() => setSelectedFlyer(event.img!)}
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-muted-foreground text-sm text-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mx-auto mb-1 opacity-50">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                              </svg>
+                              <div>No attachment</div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </AnimatedSection>
+              ))}
+            </div>
+          </div>
+          
+          <AnimatedSection animation="fade-in" delay={400}>
+            <div className="bg-card/80 border border-border rounded-lg p-6 backdrop-blur-sm">
+              <div className="flex flex-col md:flex-row items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-semibold mb-2 text-card-foreground">Have an event suggestion?</h3>
+                  <p className="text-muted-foreground">We'd love to hear your ideas for future events and workshops!</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="mt-4 md:mt-0"
+                  onClick={() => setSuggestionDialogOpen(true)}
+                >
+                  Submit Idea
+                </Button>
+              </div>
+            </div>
+          </AnimatedSection>
+
+          {/* Submit idea dialog */}
+          <Dialog open={suggestionDialogOpen} onOpenChange={setSuggestionDialogOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Submit an event idea</DialogTitle>
+              </DialogHeader>
+              <form
+                className="space-y-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!suggestionTitle.trim()) {
+                    toast({ title: 'Title required', description: 'Please enter a title for your idea.', variant: 'destructive' });
+                    return;
+                  }
+                  setSuggestionSubmitting(true);
+                  const { error: submitError } = await db.from('event_suggestions').insert({
+                    title: suggestionTitle.trim(),
+                    description: suggestionDescription.trim() || null,
+                    submitter_email: suggestionEmail.trim() || null,
+                  });
+                  setSuggestionSubmitting(false);
+                  if (submitError) {
+                    toast({ title: 'Could not submit', description: submitError.message, variant: 'destructive' });
+                    return;
+                  }
+                  toast({ title: 'Thanks!', description: "We've received your idea and will consider it for future events." });
+                  setSuggestionDialogOpen(false);
+                  setSuggestionTitle('');
+                  setSuggestionDescription('');
+                  setSuggestionEmail('');
+                }}
+              >
+                <div className="space-y-2">
+                  <label htmlFor="suggestion-title" className="text-sm font-medium">Title</label>
+                  <Input
+                    id="suggestion-title"
+                    value={suggestionTitle}
+                    onChange={(e) => setSuggestionTitle(e.target.value)}
+                    placeholder="e.g. Workshop on product roadmapping"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="suggestion-description" className="text-sm font-medium">Description (optional)</label>
+                  <Textarea
+                    id="suggestion-description"
+                    value={suggestionDescription}
+                    onChange={(e) => setSuggestionDescription(e.target.value)}
+                    placeholder="Tell us more about your idea..."
+                    rows={3}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="suggestion-email" className="text-sm font-medium">Your email (optional)</label>
+                  <Input
+                    id="suggestion-email"
+                    type="email"
+                    value={suggestionEmail}
+                    onChange={(e) => setSuggestionEmail(e.target.value)}
+                    placeholder="you@byu.edu"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setSuggestionDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={suggestionSubmitting}>
+                    {suggestionSubmitting ? 'Submitting...' : 'Submit idea'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </AnimatedSection>
+      </div>
+      
+      {/* Flyer Modal */}
+      {selectedFlyer && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg max-w-4xl max-h-[90vh] w-full overflow-hidden border border-border">
+            <div className="flex items-center justify-between p-4 border-b border-border">
+              <h3 className="text-lg font-semibold">Event Attachment</h3>
+              <button
+                onClick={() => setSelectedFlyer(null)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-4 h-[calc(90vh-80px)] overflow-auto">
+              {selectedFlyer.endsWith('.pdf') ? (
+                <iframe
+                  src={selectedFlyer}
+                  className="w-full h-full border-0"
+                  title="Event Attachment PDF"
+                />
+              ) : (
+                <img
+                  src={selectedFlyer}
+                  alt="Event Attachment"
+                  className="w-full h-auto max-h-full object-contain mx-auto"
+                />
+              )}
+            </div>
+            <div className="p-4 border-t border-border flex justify-end space-x-2">
+              <a
+                href={selectedFlyer}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-gradient-to-r from-primary to-secondary !text-white rounded-lg hover:opacity-90 transition-opacity drop-shadow-md"
+              >
+                Open in New Tab
+              </a>
+              <button
+                onClick={() => setSelectedFlyer(null)}
+                className="px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default EventsPage;
