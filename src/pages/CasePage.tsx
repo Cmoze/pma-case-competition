@@ -7,6 +7,7 @@ import { DEMO_MEMBER_EMAIL, DEMO_MEMBER_PASSWORD } from "@/lib/localDb/seed";
 const REPO_URL = "https://github.com/danielwait2/pma-case-competition";
 const DICTIONARY_URL = `${REPO_URL}/blob/main/case-kit/data-dictionary.md`;
 const SUBMIT_URL = "https://pma-website-bay.vercel.app/submit";
+const EXTRA_DATA_URL = "https://drive.google.com/drive/folders/1AtuzHJMGt2meIxbtXTMCMa6d0CpnwlRa";
 
 const WEEKS = [
   { label: "Oct 11", value: 41 },
@@ -358,6 +359,22 @@ const CasePage = () => {
             </a>
           </div>
         </AnimatedSection>
+
+        <div id="extra-data" className="max-w-3xl mx-auto mt-24 scroll-mt-24">
+          <div className="rounded-2xl border border-dashed border-border p-6 text-center">
+            <h2 className="text-lg font-bold mb-2">Extra data</h2>
+            <p className="text-sm text-muted-foreground mb-4">Don't open this until Daniel or Heber say to.</p>
+            <a
+              href={EXTRA_DATA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border font-medium hover:bg-muted transition-colors"
+            >
+              Open the extra data (Google Drive)
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
