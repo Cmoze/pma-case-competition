@@ -235,6 +235,12 @@ const CasePage = () => {
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 mb-4">
                   More technical · Claude Code, Codex, or Cursor
                 </p>
+                <p className="text-sm mb-4">
+                  <span className="text-muted-foreground">New to coding agents? </span>
+                  <Link to="/case/codex" className="text-primary underline font-medium">
+                    Set up Codex with free student credits (Mac and Windows)
+                  </Link>
+                </p>
                 <ol className="space-y-4 text-sm list-decimal list-inside">
                   <li>
                     <span className="font-medium">Fork the repo.</span>{" "}
