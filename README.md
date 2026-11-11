@@ -14,33 +14,28 @@ Start by reading [`case-kit/brief.md`](case-kit/brief.md). It explains the goal,
 
 This is not the official PMA site. Names, accounts and data in it are fictional.
 
-## Pick a track
+## Two ways to work
 
-You can mix tracks. Pick the one that matches how your team likes to work.
+Use whatever your team is comfortable with, or mix them.
 
-### Track 1: Beginner (chat AI)
+### In a chat (ChatGPT, Claude, or Gemini)
 
 No coding needed.
 
 1. Open the demo site and click around like a student would. Sign in with the demo login below to see what members see.
 2. Download the case kit: [`case-kit.zip`](public/case-kit.zip), or use the download button on the `/case` page.
-3. Unzip it and upload the CSV files and interviews to ChatGPT or Claude.
+3. Upload the CSV files and interviews to ChatGPT (it takes the zip) or Claude (unzip first).
 4. Ask it questions. For example: "Summarize what is in these files", "Compute the weekly trend of the north star", "What do the interviews have in common?" Always ask the AI to show how it got a number, and check that it makes sense.
 5. Pick the one cause you believe most, and write your spec.
-6. Mock up your fix as a Claude artifact (ask Claude to "build a clickable mockup of this feature as an artifact") and share the link.
+6. Mock up your fix as a Claude artifact, or in Lovable or v0, and share the link.
 
-### Track 2: Builder (prototype)
-
-1. Do steps 1 to 5 from Track 1.
-2. Describe your fix to Lovable, v0, or a Claude artifact. Paste in your spec and a screenshot of the page you are changing so it matches the real site.
-3. Iterate until someone could click through it, then share the link.
-
-### Track 3: Advanced (pull request)
+### In the code (Claude Code, Codex, Cursor)
 
 1. Fork this repo on GitHub (the Fork button at the top right).
-2. Clone your fork and run it locally (see Quick start below).
+2. Clone your fork and run `npm install` right away (see Quick start below).
 3. Analyze the kit with any tools you like.
-4. Build the fix with Claude Code, Cursor, or any editor. [`CLAUDE.md`](CLAUDE.md) gives coding agents the context they need.
+4. Build the fix with Claude Code, Codex, Cursor, or any editor. [`CLAUDE.md`](CLAUDE.md) gives coding agents the context they need.
+   In Claude Code, three skills are ready: `/case-coach` asks you questions until you find the cause, `/write-spec` turns your findings into SPEC.md, and `/ship-pr` checks the build and opens your pull request.
 5. Open a pull request against this repo (see How to submit a pull request).
 
 ## AI research skills

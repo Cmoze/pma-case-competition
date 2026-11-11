@@ -19,6 +19,10 @@ There is no backend and no environment variables. `src/lib/localDb/index.ts` exp
 * Sign in state and membership: `src/contexts/AuthContext.tsx`
 * Case kit (brief, CSVs, interviews): `case-kit/`
 
+## Skills
+
+`.claude/skills/` has `case-coach` (coach the student with questions, never give the cause), `write-spec` (write SPEC.md), and `ship-pr` (build check and PR against danielwait2/pma-case-competition).
+
 ## Style
 
 Follow `docs/BRAND_STYLE_GUIDE.md` for any new UI. Reuse the Tailwind theme tokens (`primary`, `muted`, `border`, `card`) and existing shadcn components instead of new colors or libraries. TypeScript only, minimal comments.

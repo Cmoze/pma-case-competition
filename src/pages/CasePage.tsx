@@ -1,166 +1,244 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Download, ExternalLink, FileText, Github, KeyRound } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, Github, MessageSquare, Terminal } from "lucide-react";
 import AnimatedSection from "@/components/AnimatedSection";
 import { DEMO_MEMBER_EMAIL, DEMO_MEMBER_PASSWORD } from "@/lib/localDb/seed";
 
 const REPO_URL = "https://github.com/danielwait2/pma-case-competition";
-const KIT_URL = `${REPO_URL}/tree/main/case-kit`;
-const fileUrl = (path: string) => `${REPO_URL}/blob/main/case-kit/${path}`;
+const DICTIONARY_URL = `${REPO_URL}/blob/main/case-kit/data-dictionary.md`;
+const SUBMIT_URL = "https://pma-website-bay.vercel.app/submit";
 
-const KIT_FILES = [
-  { path: "brief.md", label: "Brief", note: "The full case, the north star, and what to present" },
-  { path: "data-dictionary.md", label: "Data dictionary", note: "What every column means" },
-  { path: "events.csv", label: "events.csv", note: "Site analytics for Oct 11 to Nov 9" },
-  { path: "users.csv", label: "users.csv", note: "Every account and when it became a member" },
-  { path: "feedback.csv", label: "feedback.csv", note: "Ratings, comments, and inbox messages" },
-  { path: "interviews", label: "interviews/", note: "Five short user interview transcripts" },
+const WEEKS = [
+  { label: "Oct 11", value: 41 },
+  { label: "Oct 18", value: 33 },
+  { label: "Oct 25", value: 30 },
+  { label: "Nov 1", value: 23 },
 ];
 
-const DELIVERABLES = [
-  { title: "Problem", body: "One or two sentences naming the most important reason the number is falling. Pick one." },
-  { title: "Evidence", body: "At least one number you computed and at least one quote from an interview or the feedback." },
-  { title: "Spec", body: "Who it is for, what it does, what you are not building, and the metric that proves it worked." },
-  { title: "Something shipped", body: "A working change, a clickable prototype, or a pull request. Rough is fine." },
+const HINTS = [
+  "Not every scary chart is the cause.",
+  "Not every loud request is the right thing to build.",
+  "Ask your AI how it got every number. Check one by hand.",
 ];
 
-const START_PROMPT =
-  "Using these files, count distinct user_id with event = page_view and path = /resources per Sunday to Saturday week starting Oct 11, using local dates and ignoring Nov 8 to 9. You should get 41, 33, 30, 23. Then list three possible reasons it fell, each with one number and one quote.";
-
-const CLOCK = [
-  { time: "0:00", what: "Framing. Track 3 teams fork and run npm install now." },
-  { time: "0:07", what: "Discover with AI. Around 0:17 we share more evidence." },
-  { time: "0:22", what: "Pick one problem and write a five line spec." },
-  { time: "0:25", what: "Build and ship." },
-  { time: "0:46", what: "Submit your link." },
-  { time: "0:48", what: "Share. A few teams show what they built." },
+const FRAMEWORKS = [
+  {
+    title: "Size it",
+    body: "How many members does this cause touch, and how much of the drop from 41 to 23 does it explain? A cause behind three lost members is a footnote.",
+  },
+  {
+    title: "Prioritize it",
+    body: "List two or three candidate fixes and score each on impact, confidence, and effort. Effort counts: you have about 20 minutes to build.",
+  },
+  {
+    title: "Scope it",
+    body: "Say who it is for and what you are not building. The smallest version that tests your idea wins.",
+  },
+  {
+    title: "Measure it",
+    body: "Name one metric your fix should move and one guardrail it must not break.",
+  },
 ];
 
-const TRACKS = [
+const DELIVERABLES = ["Problem", "Evidence and size", "Spec", "Something shipped"];
+
+const STARTER_PROMPT =
+  "I'm a product manager investigating why weekly active members on our club's Resources page fell from 41 to 23 in a month. The attached files are our site analytics, user feedback, and five user interviews. Act as my coach, not my analyst. Don't tell me the cause. Ask me one question at a time that pushes my thinking: what to look at first, which users to compare, what changed and when, how big each possible cause is, and which one is worth fixing first. When I ask you to compute something, show exactly how you got the number so I can check it. Start by asking what I want to check first. If you are a coding agent working in the pma-case-competition repo, use its skills: case-coach now, write-spec once I have a problem and evidence, and ship-pr when the fix is built.";
+
+const SKILLS = [
+  { name: "/case-coach", body: "Asks you questions about the kit until you find the cause, without giving you the answer." },
+  { name: "/write-spec", body: "Turns your findings into the four part spec and saves it as SPEC.md." },
+  { name: "/ship-pr", body: "Checks the build and opens a pull request with your spec as the description." },
+];
+
+const WAYS = [
   {
-    level: "Beginner",
-    title: "Chat AI",
-    ship: "A shared ChatGPT or Claude chat, or a Google Doc set to anyone with the link, with your spec plus a mock or the message you'd send users.",
-    steps: [
-      "Click around this site like a student would. Try the demo login to see the members view.",
-      "Download the case kit.",
-      "Upload the CSVs and interviews to ChatGPT or Claude and ask it to find patterns and compute numbers.",
-      "Mock your fix as a Claude artifact and share the link.",
-    ],
+    icon: MessageSquare,
+    title: "In a chat",
+    tools: "ChatGPT, Claude, or Gemini",
+    body: "Upload the kit and ask questions until you find the cause. Then mock your fix as a Claude artifact, or in Lovable or v0.",
+    ship: "A share link to your mock or prototype, with your spec.",
   },
   {
-    level: "Builder",
-    title: "Prototype",
-    ship: "A Lovable, v0, or artifact link. Tip: paste a screenshot of the part of /resources you're changing, plus your spec.",
-    steps: [
-      "Do the analysis from the Beginner track.",
-      "Describe your fix to Lovable, v0, or a Claude artifact.",
-      "Iterate until the prototype is clickable, then share the link.",
-    ],
+    icon: Terminal,
+    title: "In the code",
+    tools: "Claude Code, Codex, Cursor",
+    body: "Fork and clone the repo. The case kit is already inside it. Run npm install right away, then npm run dev, and change the real site. CLAUDE.md gives your agent the context it needs.",
+    ship: "A pull request with your spec in the description.",
+  },
+];
+
+const KIT = [
+  {
+    file: "brief.md",
+    what: "The case: your role, the goal, the north star, and what you present.",
   },
   {
-    level: "Advanced",
-    title: "Pull request",
-    ship: "A GitHub pull request link with your spec and a screenshot in the description.",
-    steps: [
-      "Fork the repo on GitHub and clone your fork.",
-      "Run npm install, then npm run dev, and open the local site.",
-      "Ship the fix with Claude Code, Cursor, or any editor.",
-      "Open a pull request against this repo with your spec in the description.",
-    ],
+    file: "events.csv",
+    what: "About 6,400 rows. One row per thing someone did on the site: page views, searches, clicks, video opens, signups, logins.",
+    columns: ["user_id", "anon_id", "session_id", "timestamp", "path", "event", "detail", "device"],
   },
+  {
+    file: "users.csv",
+    what: "About 340 rows. One row per account: when it signed up, confirmed its email, became a member, and was last seen.",
+    columns: ["user_id", "signup_at", "class_year", "major", "confirmed_at", "member_approved_at", "last_seen_at", "sessions_30d"],
+  },
+  {
+    file: "feedback.csv",
+    what: "About 120 rows. Ratings and comments from the Resources page, plus emails sent to the club inbox.",
+    columns: ["user_id", "submitted_at", "page", "rating", "comment"],
+  },
+  {
+    file: "interviews/",
+    what: "Five short transcripts of interviews with BYU students, run the week of Nov 2.",
+  },
+  {
+    file: "data-dictionary.md",
+    what: "What every column and event type means. Hand it to your AI along with the data.",
+  },
+];
+
+const KIT_NOTES = [
+  "Everything covers Oct 11 to Nov 9, 2026, in Utah local time.",
+  "Weeks run Sunday to Saturday. Nov 8 to 9 is a partial week, so leave it out when comparing weeks.",
+  "user_id links all three CSVs. Visitors who are not logged in only have an anon_id.",
 ];
 
 const CasePage = () => {
+  const [copied, setCopied] = useState(false);
+
+  const copyPrompt = async () => {
+    await navigator.clipboard.writeText(STARTER_PROMPT);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-20 bg-background text-foreground">
       <div className="container mx-auto px-4 md:px-6">
         <AnimatedSection animation="slide-up">
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+          <div className="max-w-3xl mx-auto mb-12">
+            <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4 text-center">
               Wed Nov 11 · Case Interview: Build the Fix with AI
             </p>
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center">
               Engagement is <span className="text-gradient">slipping</span>
             </h1>
-            <p className="text-lg text-muted-foreground">
-              You are the PM for this website. Use data, user interviews, and AI to find out why, write a short spec,
-              and ship a fix in one hour.
+            <div className="space-y-4 text-lg text-muted-foreground">
+              <p>
+                You are the product manager for the BYU Product Management Association website. The most valuable
+                thing on it is{" "}
+                <Link to="/resources" className="text-primary underline">
+                  Resources
+                </Link>
+                , the members only library of interview prep, APM deadlines, and job boards. It only helps if students
+                come back to it every week during recruiting season.
+              </p>
+              <p>
+                Your north star is weekly active members on Resources: distinct logged in members who open the library
+                in a Sunday to Saturday week. Over the last month it fell from 41 to 23, and recruiting peaks in about
+                three weeks. Leadership wants to know why, and what you will ship to fix it.
+              </p>
+            </div>
+            <div className="mt-8 grid grid-cols-4 gap-2 sm:gap-4">
+              {WEEKS.map((w) => (
+                <div key={w.label} className="rounded-xl border border-border bg-card p-3 text-center">
+                  <p className="text-2xl md:text-3xl font-bold">{w.value}</p>
+                  <p className="text-xs text-muted-foreground mt-1">Week of {w.label}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-8 text-center font-semibold">
+              Find the cause, write a short spec, and build and ship it in one hour.
             </p>
           </div>
         </AnimatedSection>
 
-        <div className="max-w-5xl mx-auto grid md:grid-cols-5 gap-6 mb-10">
-          <div className="md:col-span-3 rounded-2xl border-2 border-primary bg-card p-6 md:p-8">
-            <h2 className="text-2xl font-bold mb-4">Start here</h2>
-            <ol className="space-y-3 text-sm md:text-base list-decimal list-inside">
+        <AnimatedSection animation="slide-up" delay={100}>
+          <div className="max-w-3xl mx-auto rounded-2xl border-2 border-primary bg-card p-6 md:p-8 mb-10">
+            <h2 className="text-2xl font-bold mb-5">Start here</h2>
+            <ol className="space-y-5 list-decimal list-inside">
               <li>
-                <a href="/case-kit.zip" download className="text-primary underline">
-                  Download the case kit
-                </a>
-                .
+                <span className="font-medium">Get the case kit.</span>{" "}
+                <span className="text-muted-foreground">
+                  It has the brief, a month of site analytics, user feedback, and five user interviews (<a href="#kit" className="text-primary underline">see what is inside</a>). Chat teams
+                  download the zip. Code teams fork the repo, where the kit is already in{" "}
+                  <code className="text-xs bg-muted px-1 py-0.5 rounded">case-kit/</code>. See{" "}
+                  <a href="#two-ways" className="text-primary underline">
+                    two ways to work
+                  </a>{" "}
+                  below.
+                </span>
               </li>
               <li>
-                One teammate signs in as{" "}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">{DEMO_MEMBER_EMAIL}</code> /{" "}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">{DEMO_MEMBER_PASSWORD}</code> and clicks around{" "}
-                <Link to="/resources" className="text-primary underline">
-                  Resources
-                </Link>
-                .
+                <span className="font-medium">Use the product.</span>{" "}
+                <span className="text-muted-foreground">
+                  Sign in as <code className="text-xs bg-muted px-1 py-0.5 rounded">{DEMO_MEMBER_EMAIL}</code> /{" "}
+                  <code className="text-xs bg-muted px-1 py-0.5 rounded">{DEMO_MEMBER_PASSWORD}</code> and click
+                  around{" "}
+                  <Link to="/resources" className="text-primary underline">
+                    Resources
+                  </Link>{" "}
+                  like a student would.
+                </span>
               </li>
               <li>
-                Upload the files to your AI (ChatGPT takes the zip; for Claude, unzip first) and paste this prompt:
-                <p className="mt-2 rounded-lg bg-muted p-3 text-xs md:text-sm text-muted-foreground select-all">
-                  {START_PROMPT}
-                </p>
+                <span className="font-medium">Ask questions.</span>{" "}
+                <span className="text-muted-foreground">
+                  Upload the kit to your AI (ChatGPT takes the zip; for Claude, unzip first) and paste in our starter
+                  prompt. It turns your AI into a coach that asks you questions instead of handing you the answer.
+                </span>
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={copyPrompt}
+                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copied ? "Copied" : "Copy starter prompt"}
+                  </button>
+                </div>
               </li>
-              <li>Around 0:17 we share more evidence. Use it to explain why, not to switch problems.</li>
               <li>
-                By 0:46, one person submits any shareable link at{" "}
-                <a
-                  href="https://pma-website-bay.vercel.app/submit"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary underline"
-                >
-                  the submission form
-                </a>
-                .
+                <span className="font-medium">Pick one problem and write your spec.</span>{" "}
+                <span className="text-muted-foreground">
+                  Partway through, we will share one more piece of evidence. Use it to sharpen your why.
+                </span>
+              </li>
+              <li>
+                <span className="font-medium">Build, ship, and submit one link per team.</span>
+                <div className="mt-3">
+                  <a
+                    href={SUBMIT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+                  >
+                    Submit your team's link
+                  </a>
+                </div>
               </li>
             </ol>
+            <div className="mt-6 border-t border-border pt-5">
+              <p className="text-sm font-semibold mb-2">Hints</p>
+              <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
+                {HINTS.map((h) => (
+                  <li key={h}>{h}</li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="md:col-span-2 rounded-2xl border border-border bg-card p-6 md:p-8">
-            <h2 className="text-2xl font-bold mb-4">Today's clock</h2>
-            <ul className="space-y-3 text-sm">
-              {CLOCK.map((c) => (
-                <li key={c.time} className="flex gap-3">
-                  <span className="font-mono font-semibold w-10 shrink-0">{c.time}</span>
-                  <span className="text-muted-foreground">{c.what}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        </AnimatedSection>
 
-        <AnimatedSection animation="slide-up" delay={100}>
-          <div className="max-w-3xl mx-auto rounded-2xl border border-border bg-card p-6 md:p-8 mb-10">
-            <h2 className="text-2xl font-bold mb-3">The brief, short version</h2>
-            <p className="text-muted-foreground mb-4">
-              PMA wants students to come back to <Link to="/resources" className="text-primary underline">Resources</Link>{" "}
-              every week during recruiting season. The north star is weekly active members on /resources: distinct
-              logged in members who saw the unlocked library in a Sunday to Saturday week. It fell from 41 to 23 over
-              the last 30 days, and recruiting peaks in about three weeks.
-            </p>
-            <p className="text-muted-foreground mb-6">
-              Not every scary chart is the cause, and not every loud request is the right thing to build.
-            </p>
+        <AnimatedSection animation="slide-up" delay={125}>
+          <div className="max-w-3xl mx-auto mb-10">
+            <h2 className="text-2xl font-bold mb-2">Think like a PM</h2>
+            <p className="text-muted-foreground mb-4">The same moves an interviewer listens for in a product case.</p>
             <div className="grid sm:grid-cols-2 gap-4">
-              {DELIVERABLES.map((d, i) => (
-                <div key={d.title} className="rounded-xl bg-muted/50 p-4">
-                  <p className="font-semibold mb-1">
-                    {i + 1}. {d.title}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{d.body}</p>
+              {FRAMEWORKS.map((f) => (
+                <div key={f.title} className="rounded-xl bg-muted/50 p-4">
+                  <p className="font-semibold mb-1">{f.title}</p>
+                  <p className="text-sm text-muted-foreground">{f.body}</p>
                 </div>
               ))}
             </div>
@@ -168,71 +246,55 @@ const CasePage = () => {
         </AnimatedSection>
 
         <AnimatedSection animation="slide-up" delay={150}>
-          <div className="max-w-3xl mx-auto rounded-2xl border border-border bg-card p-6 md:p-8 mb-10">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-1">The case kit</h2>
-                <p className="text-muted-foreground text-sm">
-                  Small enough to upload to the free version of ChatGPT, Claude, or Gemini.
-                </p>
-              </div>
-              <a
-                href="/case-kit.zip"
-                download
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-primary to-secondary rounded-xl text-white font-bold hover:scale-105 transition-all duration-300 shadow-lg shrink-0"
-              >
-                <Download className="h-5 w-5" />
-                Download case-kit.zip
-              </a>
-            </div>
-            <ul className="divide-y divide-border">
-              {KIT_FILES.map((f) => (
-                <li key={f.path}>
-                  <a
-                    href={f.path === "interviews" ? `${KIT_URL}/interviews` : fileUrl(f.path)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 py-3 hover:text-primary transition-colors"
-                  >
-                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    <span className="font-medium">{f.label}</span>
-                    <span className="text-sm text-muted-foreground hidden sm:inline">{f.note}</span>
-                    <ExternalLink className="h-4 w-4 ml-auto shrink-0 text-muted-foreground" />
-                  </a>
-                </li>
+          <div className="max-w-3xl mx-auto mb-10">
+            <h2 className="text-2xl font-bold mb-4">What you show at the end</h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {DELIVERABLES.map((d, i) => (
+                <div key={d} className="rounded-xl border border-border bg-card p-4">
+                  <p className="font-semibold">
+                    {i + 1}. {d}
+                  </p>
+                </div>
               ))}
-            </ul>
-            <a
-              href={KIT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-4 text-sm text-primary underline"
-            >
-              <Github className="h-4 w-4" />
-              Browse the kit on GitHub
-            </a>
+            </div>
           </div>
         </AnimatedSection>
 
         <AnimatedSection animation="slide-up" delay={200}>
-          <div className="max-w-5xl mx-auto mb-10">
-            <h2 className="text-2xl font-bold mb-2 text-center">Pick a track</h2>
-            <p className="text-muted-foreground text-center mb-8">Mix and match. Pick what fits your team.</p>
-            <div className="grid md:grid-cols-3 gap-6">
-              {TRACKS.map((t) => (
-                <div key={t.level} className="rounded-2xl border border-border bg-card p-6 flex flex-col">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t.level}</p>
-                  <h3 className="text-xl font-bold mt-1 mb-4">{t.title}</h3>
-                  <ol className="space-y-3 text-sm text-muted-foreground list-decimal list-inside">
-                    {t.steps.map((s) => (
-                      <li key={s}>{s}</li>
-                    ))}
-                  </ol>
-                  <p className="mt-4 text-sm">
-                    <span className="font-semibold text-foreground">You ship: </span>
-                    <span className="text-muted-foreground">{t.ship}</span>
+          <div id="two-ways" className="max-w-3xl mx-auto scroll-mt-24">
+            <h2 className="text-2xl font-bold mb-2">Two ways to work</h2>
+            <p className="text-muted-foreground mb-6">
+              Use whatever your team is comfortable with, or mix them. Plenty of teams dig in a chat and build in code.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              {WAYS.map((w) => (
+                <div key={w.title} className="rounded-2xl border border-border bg-card p-6 flex flex-col">
+                  <div className="flex items-center gap-2">
+                    <w.icon className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-xl font-bold">{w.title}</h3>
+                  </div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 mb-4">
+                    {w.tools}
                   </p>
-                  {t.level === "Advanced" && (
+                  <p className="text-sm text-muted-foreground">{w.body}</p>
+                  <p className="mt-4 text-sm">
+                    <span className="font-semibold">You ship: </span>
+                    <span className="text-muted-foreground">{w.ship}</span>
+                  </p>
+                  {w.title === "In the code" && (
+                    <div className="mt-4">
+                      <p className="text-sm font-semibold mb-2">Skills in the repo (Claude Code)</p>
+                      <ul className="space-y-2 text-sm">
+                        {SKILLS.map((k) => (
+                          <li key={k.name}>
+                            <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{k.name}</code>{" "}
+                            <span className="text-muted-foreground">{k.body}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {w.title === "In the code" && (
                     <a
                       href={REPO_URL}
                       target="_blank"
@@ -243,6 +305,16 @@ const CasePage = () => {
                       Open the repo
                     </a>
                   )}
+                  {w.title === "In a chat" && (
+                    <a
+                      href="/case-kit.zip"
+                      download
+                      className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border font-medium hover:bg-muted transition-colors"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download case-kit.zip
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -250,39 +322,40 @@ const CasePage = () => {
         </AnimatedSection>
 
         <AnimatedSection animation="slide-up" delay={250}>
-          <div className="max-w-3xl mx-auto grid sm:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-border bg-card p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <KeyRound className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-lg font-bold">Demo login</h2>
-              </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Sign in as a member to see the unlocked Resources page.
-              </p>
-              <p className="text-sm">
-                Email: <code className="font-mono bg-muted px-1.5 py-0.5 rounded">{DEMO_MEMBER_EMAIL}</code>
-              </p>
-              <p className="text-sm mt-1">
-                Password: <code className="font-mono bg-muted px-1.5 py-0.5 rounded">{DEMO_MEMBER_PASSWORD}</code>
-              </p>
-              <Link to="/auth" className="inline-block mt-4 text-sm text-primary underline">
-                Go to login
-              </Link>
+          <div id="kit" className="max-w-3xl mx-auto mt-10 scroll-mt-24">
+            <h2 className="text-2xl font-bold mb-2">What is in the case kit</h2>
+            <p className="text-muted-foreground mb-6">A quick tour so you know what to ask for.</p>
+            <div className="rounded-2xl border border-border bg-card divide-y divide-border">
+              {KIT.map((k) => (
+                <div key={k.file} className="p-5">
+                  <p className="font-mono font-semibold text-sm">{k.file}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{k.what}</p>
+                  {k.columns && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {k.columns.map((c) => (
+                        <code key={c} className="text-xs bg-muted px-1.5 py-0.5 rounded">
+                          {c}
+                        </code>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
-            <div className="rounded-2xl border border-border bg-gradient-to-r from-primary to-secondary p-6 text-white">
-              <h2 className="text-lg font-bold mb-3">Submit</h2>
-              <p className="text-sm text-white/80 mb-3">
-                Share your prototype link, artifact link, or pull request along with your team name.
-              </p>
-              <a
-                href="https://pma-website-bay.vercel.app/submit"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block rounded-lg bg-white px-4 py-2 text-sm font-semibold text-primary hover:bg-white/90"
-              >
-                Submit your team's work
-              </a>
-            </div>
+            <ul className="mt-5 space-y-1 text-sm text-muted-foreground list-disc list-inside">
+              {KIT_NOTES.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </ul>
+            <a
+              href={DICTIONARY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 mt-4 text-sm text-primary underline"
+            >
+              Read the full data dictionary
+              <ExternalLink className="h-4 w-4" />
+            </a>
           </div>
         </AnimatedSection>
       </div>
