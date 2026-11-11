@@ -43,6 +43,10 @@ No coding needed.
 4. Build the fix with Claude Code, Cursor, or any editor. [`CLAUDE.md`](CLAUDE.md) gives coding agents the context they need.
 5. Open a pull request against this repo (see How to submit a pull request).
 
+## AI research skills
+
+If you use Claude Code (or another agent that reads `.claude/skills`) in this repo, it already has four skills for the case kit: `case-data-map`, `engagement-metrics`, `user-research`, and `member-segments`. Ask things like "compute the north star by class year" or "what are users saying about search?", or type `/user-research`. They show data, quotes and sources; they do not make the decision for you. See [`.claude/skills/README.md`](.claude/skills/README.md).
+
 ## Quick start
 
 You need [Node.js](https://nodejs.org) 22 or newer.
