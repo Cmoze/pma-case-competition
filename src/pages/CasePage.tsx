@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Check, Copy, Download, ExternalLink, Github, MessageSquare, Terminal } from "lucide-react";
+import { CartesianGrid, LabelList, Line, LineChart, XAxis, YAxis } from "recharts";
 import AnimatedSection from "@/components/AnimatedSection";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { DEMO_MEMBER_EMAIL, DEMO_MEMBER_PASSWORD } from "@/lib/localDb/seed";
 
 const REPO_URL = "https://github.com/danielwait2/pma-case-competition";
@@ -15,6 +17,10 @@ const WEEKS = [
   { label: "Oct 25", value: 30 },
   { label: "Nov 1", value: 23 },
 ];
+
+const chartConfig = {
+  value: { label: "Weekly active members", color: "hsl(var(--primary))" },
+} satisfies ChartConfig;
 
 const HINTS = [
   "Not every scary chart is the cause.",
@@ -114,6 +120,17 @@ const CasePage = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const copyButton = (
+    <button
+      type="button"
+      onClick={copyPrompt}
+      className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors"
+    >
+      {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      {copied ? "Copied" : "Copy starter prompt"}
+    </button>
+  );
+
   return (
     <div className="min-h-screen pt-24 pb-20 bg-background text-foreground">
       <div className="container mx-auto px-4 md:px-6">
@@ -141,13 +158,34 @@ const CasePage = () => {
                 three weeks. Leadership wants to know why, and what you will ship to fix it.
               </p>
             </div>
-            <div className="mt-8 grid grid-cols-4 gap-2 sm:gap-4">
-              {WEEKS.map((w) => (
-                <div key={w.label} className="rounded-xl border border-border bg-card p-3 text-center">
-                  <p className="text-2xl md:text-3xl font-bold">{w.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Week of {w.label}</p>
-                </div>
-              ))}
+            <div className="mt-8 rounded-2xl border border-border bg-card p-5 md:p-6">
+              <p className="font-semibold">Weekly active members on Resources</p>
+              <p className="text-sm text-muted-foreground mb-4">Down 44% in four weeks. Weeks run Sunday to Saturday.</p>
+              <ChartContainer config={chartConfig} className="aspect-auto h-56 w-full">
+                <LineChart data={WEEKS} margin={{ top: 24, right: 24, left: 0, bottom: 0 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                    interval={0}
+                    padding={{ left: 16, right: 16 }}
+                  />
+                  <YAxis domain={[0, 50]} tickLine={false} axisLine={false} width={32} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line
+                    dataKey="value"
+                    type="linear"
+                    stroke="var(--color-value)"
+                    strokeWidth={3}
+                    dot={{ r: 5, fill: "var(--color-value)" }}
+                    isAnimationActive={false}
+                  >
+                    <LabelList dataKey="value" position="top" offset={10} className="fill-foreground font-semibold" />
+                  </Line>
+                </LineChart>
+              </ChartContainer>
             </div>
             <p className="mt-8 text-center font-semibold">
               Find the cause, write a short spec, and build and ship it in one hour.
@@ -156,70 +194,126 @@ const CasePage = () => {
         </AnimatedSection>
 
         <AnimatedSection animation="slide-up" delay={100}>
-          <div className="max-w-3xl mx-auto rounded-2xl border-2 border-primary bg-card p-6 md:p-8 mb-10">
-            <h2 className="text-2xl font-bold mb-5">Start here</h2>
-            <ol className="space-y-5 list-decimal list-inside">
-              <li>
-                <span className="font-medium">Get the case kit.</span>{" "}
-                <span className="text-muted-foreground">
-                  It has the brief, a month of site analytics, user feedback, and five user interviews (<a href="#kit" className="text-primary underline">see what is inside</a>). Chat teams
-                  download the zip. Code teams fork the repo, where the kit is already in{" "}
-                  <code className="text-xs bg-muted px-1 py-0.5 rounded">case-kit/</code>. See{" "}
-                  <a href="#two-ways" className="text-primary underline">
-                    two ways to work
-                  </a>{" "}
-                  below.
-                </span>
-              </li>
-              <li>
-                <span className="font-medium">Use the product.</span>{" "}
-                <span className="text-muted-foreground">
-                  Sign in as <code className="text-xs bg-muted px-1 py-0.5 rounded">{DEMO_MEMBER_EMAIL}</code> /{" "}
-                  <code className="text-xs bg-muted px-1 py-0.5 rounded">{DEMO_MEMBER_PASSWORD}</code> and click
-                  around{" "}
-                  <Link to="/resources" className="text-primary underline">
-                    Resources
-                  </Link>{" "}
-                  like a student would.
-                </span>
-              </li>
-              <li>
-                <span className="font-medium">Ask questions.</span>{" "}
-                <span className="text-muted-foreground">
-                  Upload the kit to your AI (ChatGPT takes the zip; for Claude, unzip first) and paste in our starter
-                  prompt. It turns your AI into a coach that asks you questions instead of handing you the answer.
-                </span>
-                <div className="mt-3">
-                  <button
-                    type="button"
-                    onClick={copyPrompt}
-                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
-                  >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    {copied ? "Copied" : "Copy starter prompt"}
-                  </button>
+          <div className="max-w-5xl mx-auto rounded-2xl border-2 border-primary bg-card p-6 md:p-8 mb-10">
+            <h2 className="text-2xl font-bold mb-1">Start here</h2>
+            <p className="text-muted-foreground mb-6">
+              Pick which track your team is taking tonight: a chat team (less technical) or a code team (more
+              technical).
+            </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="rounded-xl bg-muted/50 p-5">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-xl font-bold">Chat team</h3>
                 </div>
-              </li>
-              <li>
-                <span className="font-medium">Pick one problem and write your spec.</span>{" "}
-                <span className="text-muted-foreground">
-                  Partway through, we will share one more piece of evidence. Use it to sharpen your why.
-                </span>
-              </li>
-              <li>
-                <span className="font-medium">Build, ship, and submit one link per team.</span>
-                <div className="mt-3">
-                  <a
-                    href={SUBMIT_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-                  >
-                    Submit your team's link
-                  </a>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 mb-4">
+                  Less technical · ChatGPT, Claude, or Gemini
+                </p>
+                <ol className="space-y-4 text-sm list-decimal list-inside">
+                  <li>
+                    <span className="font-medium">Get the case kit.</span>{" "}
+                    <a href="/case-kit.zip" download className="text-primary underline">
+                      Download case-kit.zip
+                    </a>{" "}
+                    <span className="text-muted-foreground">
+                      (<a href="#kit" className="text-primary underline">see what is inside</a>).
+                    </span>
+                  </li>
+                  <li>
+                    <span className="font-medium">Use the product.</span>{" "}
+                    <span className="text-muted-foreground">
+                      Sign in as <code className="text-xs bg-background px-1 py-0.5 rounded">{DEMO_MEMBER_EMAIL}</code>{" "}
+                      / <code className="text-xs bg-background px-1 py-0.5 rounded">{DEMO_MEMBER_PASSWORD}</code> and
+                      click around{" "}
+                      <Link to="/resources" className="text-primary underline">
+                        Resources
+                      </Link>{" "}
+                      like a student would.
+                    </span>
+                  </li>
+                  <li>
+                    <span className="font-medium">Ask questions.</span>{" "}
+                    <span className="text-muted-foreground">
+                      Upload the kit to your AI (ChatGPT takes the zip; for Claude, unzip first) and paste in the
+                      starter prompt. It coaches you with questions instead of handing you the answer.
+                    </span>
+                    <div className="mt-2">{copyButton}</div>
+                  </li>
+                  <li>
+                    <span className="font-medium">Pick one problem and write your spec.</span>
+                  </li>
+                  <li>
+                    <span className="font-medium">Build, ship, and submit.</span>{" "}
+                    <span className="text-muted-foreground">
+                      Mock your fix as a Claude artifact, or in Lovable or v0, and submit the share link.
+                    </span>
+                  </li>
+                </ol>
+              </div>
+              <div className="rounded-xl bg-muted/50 p-5">
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-xl font-bold">Code team</h3>
                 </div>
-              </li>
-            </ol>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 mb-4">
+                  More technical · Claude Code, Codex, or Cursor
+                </p>
+                <ol className="space-y-4 text-sm list-decimal list-inside">
+                  <li>
+                    <span className="font-medium">Fork the repo.</span>{" "}
+                    <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                      Open it on GitHub
+                    </a>
+                    <span className="text-muted-foreground">
+                      , fork it, and clone your fork. The kit is already in{" "}
+                      <code className="text-xs bg-background px-1 py-0.5 rounded">case-kit/</code>.
+                    </span>
+                  </li>
+                  <li>
+                    <span className="font-medium">Launch the product.</span>{" "}
+                    <span className="text-muted-foreground">
+                      Run <code className="text-xs bg-background px-1 py-0.5 rounded">npm install</code> right away,
+                      then <code className="text-xs bg-background px-1 py-0.5 rounded">npm run dev</code>, and open
+                      localhost:8080. Sign in as{" "}
+                      <code className="text-xs bg-background px-1 py-0.5 rounded">{DEMO_MEMBER_EMAIL}</code> /{" "}
+                      <code className="text-xs bg-background px-1 py-0.5 rounded">{DEMO_MEMBER_PASSWORD}</code>.
+                    </span>
+                  </li>
+                  <li>
+                    <span className="font-medium">Ask questions.</span>{" "}
+                    <span className="text-muted-foreground">
+                      Paste the starter prompt into your coding agent, or run{" "}
+                      <code className="text-xs bg-background px-1 py-0.5 rounded">/case-coach</code> in Claude Code.
+                    </span>
+                    <div className="mt-2">{copyButton}</div>
+                  </li>
+                  <li>
+                    <span className="font-medium">Pick one problem and write your spec.</span>
+                  </li>
+                  <li>
+                    <span className="font-medium">Build, ship, and submit.</span>{" "}
+                    <span className="text-muted-foreground">
+                      Change the real site and open a pull request with your spec in the description. Submit the PR
+                      link.
+                    </span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+            <p className="mt-6 text-sm text-muted-foreground">
+              Partway through, we will share one more piece of evidence. Use it to sharpen your why. One link per
+              team.
+            </p>
+            <div className="mt-3">
+              <a
+                href={SUBMIT_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
+              >
+                Submit your team's link
+              </a>
+            </div>
             <div className="mt-6 border-t border-border pt-5">
               <p className="text-sm font-semibold mb-2">Hints</p>
               <ul className="space-y-1 text-sm text-muted-foreground list-disc list-inside">
