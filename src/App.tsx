@@ -25,6 +25,7 @@ import RoadmapPage from "./pages/RoadmapPage";
 import PublicLayout from "./components/layout/PublicLayout";
 import AskPage from "./pages/AskPage";
 import CasePage from "./pages/CasePage";
+import CodexSetupPage from "./pages/CodexSetupPage";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
               <Route element={<PublicLayout />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/case" element={<CasePage />} />
+                <Route path="/case/codex" element={<CodexSetupPage />} />
                 <Route path="/team" element={<TeamPage />} />
                 <Route path="/hackathon" element={<HackathonPage />} />
                 <Route path="/hackathon/share" element={<HackathonSharePage />} />

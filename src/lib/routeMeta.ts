@@ -12,6 +12,10 @@ export const ROUTE_META: Record<string, { title: string; description: string }> 
     title: "Case Interview | PMA Demo Site",
     description: "Attendee guide for Case Interview: Build the Fix with AI: the brief, the case kit, and three ways to ship a fix.",
   },
+  "/case/codex": {
+    title: "Codex Setup | PMA Demo Site",
+    description: "Claim free Codex student credits and set up Codex on Mac or Windows for the case.",
+  },
   "/team": {
     title: "Team | PMA Demo Site",
     description: "Meet the BYU Product Management Association leadership and team.",
