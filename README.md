@@ -114,4 +114,4 @@ Stack: React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui, React Router.
 6. Put your team name in the title. In the description, paste your spec: the problem, your evidence, what you built, what you did not build, and the metric you would watch.
 7. Submit the pull request link at https://pma-website-bay.vercel.app/submit.
 
-Small, focused pull requests are easier to judge than big ones. A checks run builds every pull request automatically; a red check means the build broke.
+Small, focused pull requests are easier to review and merge into the live PMA site. A checks run builds every pull request automatically; a red check means the build broke.

@@ -32,7 +32,7 @@ const CLOCK = [
   { time: "0:22", what: "Pick one problem and write a five line spec." },
   { time: "0:25", what: "Build and ship." },
   { time: "0:46", what: "Submit your link." },
-  { time: "0:48", what: "Judging." },
+  { time: "0:48", what: "Share. A few teams show what they built." },
 ];
 
 const TRACKS = [

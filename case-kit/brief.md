@@ -41,7 +41,7 @@ Watch out: not every scary chart is the cause, and not every loud request is the
 | 0:22 to 0:25 | Pick one problem and write a five line spec |
 | 0:25 to 0:46 | Build and ship |
 | 0:46 | Submit your link at https://pma-website-bay.vercel.app/submit |
-| 0:48 | Judging. Three or four teams present for two minutes each |
+| 0:48 | Share. A few teams show what they built |
 | 0:58 | Wrap |
 
 ## What is in the kit
@@ -66,6 +66,8 @@ You can mix tracks. Pick the one that fits your team.
 
 **Track 3: Pull request.** Fork this repo, run `npm install` and `npm run dev`, and change the real site with Cursor, Claude Code, or any editor. Ship a pull request against this repo with your spec in the description.
 
-## Judging
+## What you get out of it
 
-Teams are judged on whether they found a real cause backed by evidence, whether the fix addresses that cause, and whether they shipped something that works. Bonus points for naming a metric you would watch after launch.
+There is no judging. This is a real PM project you can put on your resume: you found a problem in product usage data, backed it with evidence, and shipped a fix with AI. PMA officers look through every submission, and the best changes get merged into the live PMA site with your names on them.
+
+Strong work finds a real cause, backs it with a number and a quote, ships a fix that addresses that cause, and names a metric you would watch after launch. That is also what makes a good resume bullet.
