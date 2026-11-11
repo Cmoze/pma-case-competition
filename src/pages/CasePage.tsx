@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Check, Copy, Download, ExternalLink, Github, MessageSquare, Terminal } from "lucide-react";
+import { Check, Copy, ExternalLink, MessageSquare, Terminal } from "lucide-react";
 import { CartesianGrid, LabelList, Line, LineChart, XAxis, YAxis } from "recharts";
 import AnimatedSection from "@/components/AnimatedSection";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
@@ -51,29 +51,6 @@ const DELIVERABLES = ["Problem", "Evidence and size", "Spec", "Something shipped
 
 const STARTER_PROMPT =
   "I'm a product manager investigating why weekly active members on our club's Resources page fell from 41 to 23 in a month. The attached files are our site analytics, user feedback, and five user interviews. Act as my coach, not my analyst. Don't tell me the cause. Ask me one question at a time that pushes my thinking: what to look at first, which users to compare, what changed and when, how big each possible cause is, and which one is worth fixing first. When I ask you to compute something, show exactly how you got the number so I can check it. Start by asking what I want to check first. If you are a coding agent working in the pma-case-competition repo, use its skills: case-coach now, write-spec once I have a problem and evidence, and ship-pr when the fix is built.";
-
-const SKILLS = [
-  { name: "/case-coach", body: "Asks you questions about the kit until you find the cause, without giving you the answer." },
-  { name: "/write-spec", body: "Turns your findings into the four part spec and saves it as SPEC.md." },
-  { name: "/ship-pr", body: "Checks the build and opens a pull request with your spec as the description." },
-];
-
-const WAYS = [
-  {
-    icon: MessageSquare,
-    title: "In a chat",
-    tools: "ChatGPT, Claude, or Gemini",
-    body: "Upload the kit and ask questions until you find the cause. Then mock your fix as a Claude artifact, or in Lovable or v0.",
-    ship: "A share link to your mock or prototype, with your spec.",
-  },
-  {
-    icon: Terminal,
-    title: "In the code",
-    tools: "Claude Code, Codex, Cursor",
-    body: "Fork and clone the repo. The case kit is already inside it. Run npm install right away, then npm run dev, and change the real site. CLAUDE.md gives your agent the context it needs.",
-    ship: "A pull request with your spec in the description.",
-  },
-];
 
 const KIT = [
   {
@@ -349,67 +326,6 @@ const CasePage = () => {
                   <p className="font-semibold">
                     {i + 1}. {d}
                   </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </AnimatedSection>
-
-        <AnimatedSection animation="slide-up" delay={200}>
-          <div id="two-ways" className="max-w-3xl mx-auto scroll-mt-24">
-            <h2 className="text-2xl font-bold mb-2">Two ways to work</h2>
-            <p className="text-muted-foreground mb-6">
-              Use whatever your team is comfortable with, or mix them. Plenty of teams dig in a chat and build in code.
-            </p>
-            <div className="grid md:grid-cols-2 gap-6">
-              {WAYS.map((w) => (
-                <div key={w.title} className="rounded-2xl border border-border bg-card p-6 flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <w.icon className="h-5 w-5 text-muted-foreground" />
-                    <h3 className="text-xl font-bold">{w.title}</h3>
-                  </div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-1 mb-4">
-                    {w.tools}
-                  </p>
-                  <p className="text-sm text-muted-foreground">{w.body}</p>
-                  <p className="mt-4 text-sm">
-                    <span className="font-semibold">You ship: </span>
-                    <span className="text-muted-foreground">{w.ship}</span>
-                  </p>
-                  {w.title === "In the code" && (
-                    <div className="mt-4">
-                      <p className="text-sm font-semibold mb-2">Skills in the repo (Claude Code)</p>
-                      <ul className="space-y-2 text-sm">
-                        {SKILLS.map((k) => (
-                          <li key={k.name}>
-                            <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{k.name}</code>{" "}
-                            <span className="text-muted-foreground">{k.body}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {w.title === "In the code" && (
-                    <a
-                      href={REPO_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border font-medium hover:bg-muted transition-colors"
-                    >
-                      <Github className="h-4 w-4" />
-                      Open the repo
-                    </a>
-                  )}
-                  {w.title === "In a chat" && (
-                    <a
-                      href="/case-kit.zip"
-                      download
-                      className="mt-6 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-border font-medium hover:bg-muted transition-colors"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download case-kit.zip
-                    </a>
-                  )}
                 </div>
               ))}
             </div>
