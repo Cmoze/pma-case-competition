@@ -77,7 +77,7 @@ const CasePage = () => {
         <AnimatedSection animation="slide-up">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <p className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-              Wed Nov 11 · AI PM Case Competition
+              Wed Nov 11 · Case Interview: Build the Fix with AI
             </p>
             <h1 className="text-4xl md:text-5xl font-bold mb-6">
               Engagement is <span className="text-gradient">slipping</span>

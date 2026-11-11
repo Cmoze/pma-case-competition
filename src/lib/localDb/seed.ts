@@ -94,9 +94,9 @@ export const seed: Tables = {
     ),
     event(
       "evt-2026-11-11",
-      "AI PM Case Competition",
+      "Case Interview: Build the Fix with AI",
       "2026-11-11T18:00:00-07:00",
-      "2026-11-11T20:00:00-07:00",
+      "2026-11-11T19:00:00-07:00",
       "TNRB 1272",
       "Play PM for the PMA website. Engagement is slipping. Use data, user interviews and AI to find why, write a short spec, and ship a fix in one hour. All skill levels welcome, from chat only AI users to Claude Code users. Bring a laptop.",
     ),

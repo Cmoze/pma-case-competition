@@ -1,6 +1,6 @@
-# PMA Case Competition site
+# PMA Case Interview site
 
-A practice copy of the BYU Product Management Association website, used for a one hour AI PM case competition. The user is a student acting as PM. Read `case-kit/brief.md` for the case. All names, accounts and data are fictional.
+A practice copy of the BYU Product Management Association website, used for a one hour PM case interview event (Case Interview: Build the Fix with AI). The user is a student acting as PM. Read `case-kit/brief.md` for the case. All names, accounts and data are fictional.
 
 ## Stack
 

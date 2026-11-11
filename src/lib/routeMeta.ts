@@ -4,13 +4,13 @@
  */
 export const ROUTE_META: Record<string, { title: string; description: string }> = {
   "/": {
-    title: "PMA Case Competition (Demo Site)",
+    title: "PMA Case Interview (Demo Site)",
     description:
       "Empowering the next generation of product leaders through hands-on experience, industry connections, and community at Brigham Young University.",
   },
   "/case": {
-    title: "AI PM Case Competition | PMA Demo Site",
-    description: "Attendee guide for the AI PM Case Competition: the brief, the case kit, and three ways to ship a fix.",
+    title: "Case Interview | PMA Demo Site",
+    description: "Attendee guide for Case Interview: Build the Fix with AI: the brief, the case kit, and three ways to ship a fix.",
   },
   "/team": {
     title: "Team | PMA Demo Site",

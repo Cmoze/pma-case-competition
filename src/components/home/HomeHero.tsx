@@ -23,7 +23,7 @@ const HomeHero = () => {
                 to="/case"
                 className="mb-6 flex w-fit mx-auto md:mx-0 items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium hover:bg-muted transition-colors"
               >
-                AI PM Case Competition, Nov 11: start here
+                Case Interview: Build the Fix with AI, Nov 11: start here
                 <span aria-hidden="true">&rarr;</span>
               </Link>
               <h1 className="text-center md:text-left text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">

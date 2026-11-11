@@ -1,6 +1,6 @@
-# PMA AI PM Case Competition
+# PMA Case Interview: Build the Fix with AI
 
-This is a practice copy of the BYU Product Management Association (PMA) website, built for the AI PM Case Competition on Wednesday, November 11, 2026.
+This is a practice copy of the BYU Product Management Association (PMA) website, built for Case Interview: Build the Fix with AI on Wednesday, November 11, 2026.
 
 **The case:** engagement is slipping. You are the PM for this site. Use data, user interviews and AI to find out why, write a short spec, and ship a fix in one hour.
 

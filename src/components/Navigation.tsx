@@ -46,7 +46,7 @@ const Navigation = () => {
     { name: 'For Companies', path: '/companies' },
     { name: 'Team', path: '/team' },
     { name: 'Contact', path: '/contact' },
-    { name: 'Case Competition', path: '/case', featured: true }
+    { name: 'Case Interview', path: '/case', featured: true }
   ];
 
   return (

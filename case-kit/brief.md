@@ -1,4 +1,6 @@
-# AI PM Case Competition: Bring Students Back to Resources
+# Case Interview: Build the Fix with AI
+
+**The case:** bring students back to Resources.
 
 ## Your role
 
