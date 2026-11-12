@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Lock, Crown, ExternalLink } from "lucide-react";
 import AuthModal from "./AuthModal";
+import { PAY_DUES_URL } from "./resources/PreviewBanner";
 
 interface PremiumResourceModalProps {
   isOpen: boolean;
@@ -70,24 +71,24 @@ const PremiumResourceModal = ({
                   <div className="flex items-start gap-3">
                     <Crown className="w-5 h-5 text-amber-500 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium">Become a PMA Member</p>
+                      <p className="text-sm font-medium">Unlocks when you're approved</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Join the Product Management Association to unlock exclusive resources, 
-                        job alerts, personalized roadmaps, and connect with fellow PM aspirants.
+                        Already paid dues? Officers approve new members within a week, and this will open
+                        automatically. Not a member yet? Join to unlock the full library.
                       </p>
                     </div>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Button 
-                    onClick={() => window.open("https://clubs.byu.edu/link/club/18295873486206095", '_blank')}
+                    onClick={() => window.open(PAY_DUES_URL, "_blank", "noopener,noreferrer")}
                     className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"
                   >
-                    Join PMA
+                    Join PMA (Pay Dues)
                     <ExternalLink className="w-4 h-4 ml-2" />
                   </Button>
                   <Button onClick={onClose} variant="outline" className="w-full">
-                    Maybe Later
+                    Keep browsing free content
                   </Button>
                 </div>
               </>

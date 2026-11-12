@@ -40,6 +40,6 @@ Keep PRs small and focused on one fix. Do not reformat unrelated files. Put the 
 
 ## Gotchas
 
-* The `/resources` lock screen is `src/components/LockedResourcesView.tsx`. `MemberLockout.tsx` and `RoadmapPage.tsx` are legacy and not on the main path.
+* Non-members get a free preview on `/resources`: items flagged `isPreview` in `src/lib/resources.ts` and `src/lib/videoLibrary.ts` stay open, everything else is locked. The status banner is `src/components/resources/PreviewBanner.tsx`. `MemberLockout.tsx` and `RoadmapPage.tsx` are legacy and not on the main path.
 * `npm run lint` has 13 existing warnings. Ignore them; only errors fail CI.
 * Do not commit `public/case-kit.zip`.

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Lock } from "lucide-react";
 import AnimatedSection from "@/components/AnimatedSection";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,43 +10,81 @@ const TOPICS = VIDEO_LIBRARY.map((topic) => ({
   videos: [...topic.videos].sort((a, b) => Number(Boolean(b.startHere)) - Number(Boolean(a.startHere))),
 })).filter((topic) => topic.videos.length > 0);
 
+const previewFirst = (videos: LibraryVideo[]) =>
+  [...videos].sort((a, b) => Number(Boolean(b.isPreview)) - Number(Boolean(a.isPreview)));
+
 const DEFAULT_TOPIC = TOPICS.find((topic) => topic.slug === "product-sense")?.slug ?? TOPICS[0]?.slug ?? "";
 
 const SubHeading = ({ children }: { children: React.ReactNode }) => (
   <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">{children}</h4>
 );
 
-const VideoTile = ({ video }: { video: LibraryVideo }) => (
-  <a
-    href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label={`${video.title}, ${video.minutes} min${video.startHere ? ", start here" : ""} (opens YouTube in a new tab)`}
-    className={`group flex h-full flex-col overflow-hidden rounded-lg border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
-      video.startHere ? "border-primary/40" : "border-border"
-    }`}
-  >
-    <div className="relative aspect-video w-full overflow-hidden bg-muted">
-      <img
-        src={`https://i.ytimg.com/vi/${video.youtubeId}/mqdefault.jpg`}
-        alt=""
-        loading="lazy"
-        className="h-full w-full object-cover"
-      />
-      {video.startHere && (
-        <Badge className="absolute left-2 top-2 px-2 py-0.5 text-[11px] font-semibold">Start here</Badge>
-      )}
-      <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white">
-        {video.minutes} min
-      </span>
-    </div>
-    <div className="flex flex-1 flex-col p-3">
-      <h5 className="line-clamp-2 text-sm font-semibold leading-snug text-card-foreground transition-colors group-hover:text-primary">
-        {video.title}
-      </h5>
-    </div>
-  </a>
-);
+const tileClass = (highlight: boolean) =>
+  `group flex h-full w-full flex-col overflow-hidden rounded-lg border bg-card text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+    highlight ? "border-primary/40" : "border-border"
+  }`;
+
+interface VideoTileProps {
+  video: LibraryVideo;
+  locked: boolean;
+  showFree: boolean;
+  onLocked: () => void;
+}
+
+const VideoTile = ({ video, locked, showFree, onLocked }: VideoTileProps) => {
+  const body = (
+    <>
+      <div className="relative aspect-video w-full overflow-hidden bg-muted">
+        <img
+          src={`https://i.ytimg.com/vi/${video.youtubeId}/mqdefault.jpg`}
+          alt=""
+          loading="lazy"
+          className={`h-full w-full object-cover ${locked ? "opacity-50" : ""}`}
+        />
+        {locked && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <Lock className="h-5 w-5 text-white" />
+          </div>
+        )}
+        {showFree ? (
+          <Badge className="absolute left-2 top-2 px-2 py-0.5 text-[11px] font-semibold">Free</Badge>
+        ) : (
+          video.startHere && (
+            <Badge className="absolute left-2 top-2 px-2 py-0.5 text-[11px] font-semibold">Start here</Badge>
+          )
+        )}
+        <span className="absolute bottom-2 right-2 rounded bg-black/75 px-1.5 py-0.5 text-xs font-medium text-white">
+          {video.minutes} min
+        </span>
+      </div>
+      <div className="flex flex-1 flex-col p-3">
+        <h5 className="line-clamp-2 text-sm font-semibold leading-snug text-card-foreground transition-colors group-hover:text-primary">
+          {video.title}
+        </h5>
+      </div>
+    </>
+  );
+
+  if (locked) {
+    return (
+      <button type="button" onClick={onLocked} aria-label={`${video.title}, members only`} className={tileClass(false)}>
+        {body}
+      </button>
+    );
+  }
+
+  return (
+    <a
+      href={`https://www.youtube.com/watch?v=${video.youtubeId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${video.title}, ${video.minutes} min${video.startHere ? ", start here" : ""} (opens YouTube in a new tab)`}
+      className={tileClass(!!video.startHere || showFree)}
+    >
+      {body}
+    </a>
+  );
+};
 
 const GuideList = ({ title, items, ordered }: { title: string; items: string[]; ordered?: boolean }) => {
   const ListTag = ordered ? "ol" : "ul";
@@ -90,7 +129,12 @@ const Guide = ({ guide }: { guide: InterviewGuide }) => (
   </div>
 );
 
-const PracticeInterviews = () => {
+interface PracticeInterviewsProps {
+  isMember: boolean;
+  onLocked: (title: string) => void;
+}
+
+const PracticeInterviews = ({ isMember, onLocked }: PracticeInterviewsProps) => {
   const [selected, setSelected] = useState(DEFAULT_TOPIC);
 
   if (TOPICS.length === 0) return null;
@@ -130,15 +174,31 @@ const PracticeInterviews = () => {
                 <h3 className="text-lg md:text-xl font-bold text-card-foreground">{topic.title}</h3>
                 <p className="mt-1 text-base leading-relaxed text-foreground/90">{topic.description}</p>
 
-                {topic.guide && <Guide guide={topic.guide} />}
+                {topic.guide && isMember && <Guide guide={topic.guide} />}
+                {topic.guide && !isMember && (
+                  <button
+                    type="button"
+                    onClick={() => onLocked(`${topic.title} guide`)}
+                    className="mt-6 flex w-full items-center gap-3 rounded-md border border-dashed border-border p-4 text-left text-sm text-muted-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    <Lock className="h-4 w-4 shrink-0" />
+                    How to approach {topic.title.toLowerCase()} questions, what works, and what hurts. Members only.
+                  </button>
+                )}
 
                 <div className="mt-8">
                   <SubHeading>
                     {topic.videos.length} video{topic.videos.length !== 1 ? "s" : ""}
                   </SubHeading>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {topic.videos.map((video) => (
-                      <VideoTile key={video.youtubeId} video={video} />
+                    {(isMember ? topic.videos : previewFirst(topic.videos)).map((video) => (
+                      <VideoTile
+                        key={video.youtubeId}
+                        video={video}
+                        locked={!isMember && !video.isPreview}
+                        showFree={!isMember && !!video.isPreview}
+                        onLocked={() => onLocked(video.title)}
+                      />
                     ))}
                   </div>
                 </div>

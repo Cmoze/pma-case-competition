@@ -58,7 +58,7 @@ const App = () => (
                 <Route path="/roadmap" element={<RoadmapPage />} />
                 <Route path="/events/ask" element={<AskPage />} />
                 <Route path="/events" element={<EventsPage />} />
-                {/* Members-only: ResourcesPage gates itself on is_pma_member */}
+                {/* Free preview for non-members; ResourcesPage locks items on is_pma_member */}
                 <Route path="/resources" element={<ResourcesPage />} />
                 <Route path="*" element={<NotFound />} />
               </Route>

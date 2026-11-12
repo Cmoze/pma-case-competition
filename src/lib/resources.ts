@@ -8,6 +8,7 @@ export interface CuratedResource {
   tips: string[];
   isPaid?: boolean;
   isFeatured?: boolean;
+  isPreview?: boolean;
 }
 
 export interface ResourceCategory {
@@ -38,6 +39,22 @@ export const RESOURCE_CATEGORIES: ResourceCategory[] = [
           "Read the company guide (Google, Meta, and others) the week before that interview.",
         ],
         isFeatured: true,
+      },
+      {
+        title: "Cracking the PM Interview: Behavioral and Estimation Starter",
+        description:
+          "Our notes on the book's behavioral and estimation chapters, plus the authors' free behavioral prep grid. Open to everyone, no membership needed.",
+        url: "https://www.crackingthepminterview.com/resources.html",
+        tips: [
+          "Behavioral: build a bank of 5 to 7 stories covering leadership, conflict, failure, and impact. Most questions can be answered with one of them.",
+          "Behavioral: download the authors' free Behavioral Preparation Grid from this link and map each story to the question types it answers.",
+          "Behavioral: tell each story as situation, what you did, and the result. Spend most of the time on your own actions and put a number on the result.",
+          "Behavioral: expect follow ups like \"what would you do differently?\" and prepare one honest answer per story.",
+          "Estimation: clarify the question first, then say your assumptions out loud before doing any math.",
+          "Estimation: break the problem into parts, such as population, the share who use it, and how often, then multiply.",
+          "Estimation: round to easy numbers (US population about 330 million, about 130 million US households) and sanity check the final answer.",
+        ],
+        isPreview: true,
       },
       {
         title: "Cracking the PM Interview",
@@ -196,6 +213,7 @@ export const RESOURCE_CATEGORIES: ResourceCategory[] = [
           "Start small: ship one working feature end to end before adding more.",
         ],
         isFeatured: true,
+        isPreview: true,
       },
       {
         title: "Lovable",
@@ -231,5 +249,39 @@ export const RESOURCE_CATEGORIES: ResourceCategory[] = [
         ],
       },
     ],
+  },
+];
+
+export interface JobPreviewProgram {
+  company: string;
+  program: string;
+  url: string;
+}
+
+export const JOB_PREVIEW: JobPreviewProgram[] = [
+  {
+    company: "Google",
+    program: "Associate Product Manager",
+    url: "https://www.google.com/about/careers/applications/jobs/results?q=%22associate%20product%20manager%22",
+  },
+  {
+    company: "Meta",
+    program: "Rotational Product Manager",
+    url: "https://www.metacareers.com/jobs?q=rotational%20product%20manager",
+  },
+  {
+    company: "Salesforce",
+    program: "Associate Product Manager",
+    url: "https://careers.salesforce.com/en/jobs/?search=associate+product+manager",
+  },
+  {
+    company: "Disney",
+    program: "Associate Product Manager Program",
+    url: "https://www.disneycareers.com/en/search-jobs/associate%20product%20manager",
+  },
+  {
+    company: "Capital One",
+    program: "Product Development Program",
+    url: "https://www.capitalonecareers.com/search-jobs/product%20development%20program",
   },
 ];

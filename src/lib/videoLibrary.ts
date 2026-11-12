@@ -3,6 +3,7 @@ export interface LibraryVideo {
   title: string;
   minutes: number;
   startHere?: boolean;
+  isPreview?: boolean;
 }
 
 export interface InterviewGuide {
@@ -65,7 +66,7 @@ export const VIDEO_LIBRARY: VideoTopic[] = [
     videos: [
       { youtubeId: "BNuRsv_42jc", title: "Google PM Mock: Improve Headspace", minutes: 25, startHere: true },
       { youtubeId: "oGqz-TMQNR4", title: "Meta Product Sense Mock: Design a Fitness App", minutes: 29, startHere: true },
-      { youtubeId: "e0Nj_eYDj2s", title: "Google PM Mock: Improve WhatsApp", minutes: 44 },
+      { youtubeId: "e0Nj_eYDj2s", title: "Google PM Mock: Improve WhatsApp", minutes: 44, isPreview: true },
       { youtubeId: "se6Soyi2k0U", title: "Meta PM Mock: Facebook Movies", minutes: 31 },
       { youtubeId: "O0K2gkCSy4o", title: "Meta PM Mock: Design a Fitness App", minutes: 29 },
       { youtubeId: "Axa7gx1lKqA", title: "Microsoft PM Mock: Design a Fridge for Kids", minutes: 30 },

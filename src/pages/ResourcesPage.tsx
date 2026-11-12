@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { db } from "@/lib/localDb";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Badge } from "@/components/ui/badge";
-import { useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import LockedResourcesView from "@/components/LockedResourcesView";
 import PaidResourceModal from "@/components/PaidResourceModal";
 import PremiumResourceModal from "@/components/PremiumResourceModal";
 import PresidencyConnect from "@/components/PresidencyConnect";
 import ApmPlaybook from "@/components/resources/ApmPlaybook";
+import JobBoardPreview from "@/components/resources/JobBoardPreview";
+import PreviewBanner from "@/components/resources/PreviewBanner";
 import PracticeInterviews from "@/components/resources/PracticeInterviews";
 import ResourcesFeedback from "@/components/resources/ResourcesFeedback";
 import { RESOURCE_CATEGORIES, type ResourceIcon } from "@/lib/resources";
@@ -25,8 +26,8 @@ interface Resource {
   image: string;
   tips?: string[];
   isPaid?: boolean;
-  isPremium?: boolean;
   isFeatured?: boolean;
+  isPreview?: boolean;
 }
 
 interface Category {
@@ -60,6 +61,7 @@ const CATEGORIES: Category[] = RESOURCE_CATEGORIES.map((category) => ({
     tips: resource.tips.length > 0 ? resource.tips : undefined,
     isPaid: resource.isPaid,
     isFeatured: resource.isFeatured,
+    isPreview: resource.isPreview,
   })),
 }));
 
@@ -96,7 +98,7 @@ const getYouTubeId = (urlString: string) => {
 
 type ImageSource = { src: string; kind: "cover" | "video" | "favicon" };
 
-const ResourceImage = ({ resource, isPmaMember }: { resource: Resource; isPmaMember: boolean }) => {
+const ResourceImage = ({ resource, locked }: { resource: Resource; locked: boolean }) => {
   const [sourceIndex, setSourceIndex] = useState(0);
 
   const sources: ImageSource[] = [];
@@ -113,7 +115,7 @@ const ResourceImage = ({ resource, isPmaMember }: { resource: Resource; isPmaMem
   }
 
   const current = sources[sourceIndex];
-  const premiumOpacity = resource.isPremium && !isPmaMember ? "opacity-60" : "";
+  const premiumOpacity = locked ? "opacity-60" : "";
   const handleError = () => setSourceIndex((i) => i + 1);
 
   if (!current) {
@@ -152,9 +154,9 @@ const ResourceImage = ({ resource, isPmaMember }: { resource: Resource; isPmaMem
   );
 };
 
-const ResourceBadges = ({ resource, isPmaMember }: { resource: Resource; isPmaMember: boolean }) => (
+const ResourceBadges = ({ resource, locked, showFree }: { resource: Resource; locked: boolean; showFree: boolean }) => (
   <>
-    {resource.isPremium && !isPmaMember && (
+    {locked && (
       <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
         <Lock className="w-5 h-5 text-white" />
       </div>
@@ -165,35 +167,37 @@ const ResourceBadges = ({ resource, isPmaMember }: { resource: Resource; isPmaMe
         Partner
       </Badge>
     )}
-    {resource.isPremium && (
+    {locked && (
       <Badge className="absolute top-2 left-2 bg-accent text-accent-foreground hover:bg-accent/80 text-xs px-2 py-0.5">
         <Crown className="w-3 h-3 mr-1 fill-current" />
-        Premium
+        Members
       </Badge>
     )}
+    {showFree && <Badge className="absolute top-2 left-2 text-xs px-2 py-0.5">Free</Badge>}
   </>
 );
 
 interface ResourceCardProps {
   resource: Resource;
   category: Category;
-  isPmaMember: boolean;
+  locked: boolean;
+  showFree: boolean;
   showCategory?: boolean;
   onOpen: (resource: Resource, categoryId: string, e?: React.MouseEvent) => Promise<void>;
 }
 
-const ResourceCard = ({ resource, category, isPmaMember, showCategory, onOpen }: ResourceCardProps) => {
+const ResourceCard = ({ resource, category, locked, showFree, showCategory, onOpen }: ResourceCardProps) => {
   const isGuide = isInAppGuide(resource);
   const ListTag = isGuide ? "ol" : "ul";
 
   return (
     <Card
       id={resourceAnchorId(resource.title)}
-      className={`h-full flex flex-col overflow-hidden bg-card border-border scroll-mt-24 ${resource.isPremium && !isPmaMember ? "ring-1 ring-accent/40" : ""}`}
+      className={`h-full flex flex-col overflow-hidden bg-card border-border scroll-mt-24 ${locked ? "ring-1 ring-accent/40" : ""}`}
     >
       <div className="relative w-full aspect-video overflow-hidden bg-muted">
-        <ResourceImage resource={resource} isPmaMember={isPmaMember} />
-        <ResourceBadges resource={resource} isPmaMember={isPmaMember} />
+        <ResourceImage resource={resource} locked={locked} />
+        <ResourceBadges resource={resource} locked={locked} showFree={showFree} />
       </div>
       <CardContent className="flex flex-col flex-1 p-5">
         {showCategory && (
@@ -207,7 +211,7 @@ const ResourceCard = ({ resource, category, isPmaMember, showCategory, onOpen }:
         <h3 className="text-lg font-semibold leading-snug text-card-foreground mb-2">{resource.title}</h3>
         <p className="text-sm leading-relaxed text-muted-foreground mb-4">{resource.description}</p>
 
-        {resource.tips && (
+        {resource.tips && !locked && (
           <div className="mb-5">
             <h4 className="text-sm font-semibold text-foreground mb-2">{isGuide ? "How to do it" : "Tips"}</h4>
             <ListTag className={`${isGuide ? "list-decimal" : "list-disc"} pl-5 space-y-1.5`}>
@@ -220,7 +224,14 @@ const ResourceCard = ({ resource, category, isPmaMember, showCategory, onOpen }:
           </div>
         )}
 
-        {!isGuide && (
+        {locked && (
+          <Button variant="outline" className="mt-auto w-full" onClick={() => void onOpen(resource, category.id)}>
+            <Lock className="w-4 h-4 mr-2" />
+            Members only
+          </Button>
+        )}
+
+        {!isGuide && !locked && (
           <Button asChild className="mt-auto w-full">
             <a
               href={resource.url}
@@ -245,6 +256,8 @@ const ResourcesPage = () => {
   const [focusedResource, setFocusedResource] = useState<string | null>(null);
   const { user, profile, isBlocked, loading: authLoading } = useAuth();
   const isPmaMember = !!profile?.is_pma_member && !isBlocked;
+  const isLocked = (resource: Resource) => !isPmaMember && !resource.isPreview;
+  const showFree = (resource: Resource) => !isPmaMember && !!resource.isPreview;
   const [selectedPaidResource, setSelectedPaidResource] = useState<{ title: string; url: string } | null>(null);
   const [selectedPremiumResource, setSelectedPremiumResource] = useState<{ title: string; url: string } | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -281,7 +294,7 @@ const ResourcesPage = () => {
       return;
     }
 
-    if (resource.isPremium && !isPmaMember) {
+    if (isLocked(resource)) {
       e?.preventDefault();
       setSelectedPremiumResource({ title: resource.title, url: resource.url });
       return;
@@ -296,7 +309,7 @@ const ResourcesPage = () => {
   const openResource = (resource: Resource, category: Category) => {
     if (resource.isPaid) {
       setSelectedPaidResource({ title: resource.title, url: resource.url });
-    } else if (resource.isPremium && !isPmaMember) {
+    } else if (isLocked(resource)) {
       setSelectedPremiumResource({ title: resource.title, url: resource.url });
     } else if (isInAppGuide(resource)) {
       setFocusedResource(resource.title);
@@ -345,21 +358,11 @@ const ResourcesPage = () => {
     );
   }
 
-  if (!isPmaMember) {
-    return (
-      <LockedResourcesView
-        isLoggedIn={!!user}
-        categories={nonEmptyCategories.map((category) => ({
-          id: category.id,
-          title: category.title,
-          description: category.description,
-          icon: category.icon,
-          color: category.color,
-          resourceCount: category.resources.length,
-        }))}
-      />
-    );
+  if (isBlocked) {
+    return <Navigate to="/blocked" replace />;
   }
+
+  const showMemberLocked = (title: string) => setSelectedPremiumResource({ title, url: "" });
 
   return (
     <div className="min-h-screen pt-16 md:pt-24 pb-12 md:pb-20 bg-background text-foreground overflow-x-hidden">
@@ -391,11 +394,19 @@ const ResourcesPage = () => {
           </div>
         </AnimatedSection>
 
-        {!selectedCategory && !searchQuery && (
+        {!isPmaMember && !selectedCategory && !searchQuery && <PreviewBanner isLoggedIn={!!user} />}
+
+        {isPmaMember && !selectedCategory && !searchQuery && (
           <ApmPlaybook onSelectCategory={setSelectedCategory} onOpenResource={openResourceByTitle} />
         )}
 
-        {!selectedCategory && !searchQuery && <PracticeInterviews />}
+        {!isPmaMember && !selectedCategory && !searchQuery && (
+          <JobBoardPreview onLocked={() => showMemberLocked("APM List")} />
+        )}
+
+        {!selectedCategory && !searchQuery && (
+          <PracticeInterviews isMember={isPmaMember} onLocked={showMemberLocked} />
+        )}
 
         {!selectedCategory && !searchQuery && <PresidencyConnect />}
 
@@ -413,7 +424,7 @@ const ResourcesPage = () => {
                   {FEATURED_RESOURCES.map(({ resource, category }, idx) => (
                     <CarouselItem key={idx} className="pl-2 md:pl-4 basis-4/5 sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
                       <Card
-                        className={`h-full bg-card/80 backdrop-blur-sm border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer ${resource.isPremium && !isPmaMember ? 'ring-1 ring-accent/40' : ''}`}
+                        className={`h-full bg-card/80 backdrop-blur-sm border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer ${isLocked(resource) ? 'ring-1 ring-accent/40' : ''}`}
                         onClick={() => openResource(resource, category)}
                       >
                         <CardContent className="p-3">
@@ -427,8 +438,8 @@ const ResourcesPage = () => {
                           </div>
 
                           <div className="w-full aspect-video rounded-md overflow-hidden bg-muted mb-2 relative">
-                            <ResourceImage resource={resource} isPmaMember={isPmaMember} />
-                            <ResourceBadges resource={resource} isPmaMember={isPmaMember} />
+                            <ResourceImage resource={resource} locked={isLocked(resource)} />
+                            <ResourceBadges resource={resource} locked={isLocked(resource)} showFree={showFree(resource)} />
                           </div>
                           <h3 className="text-sm font-semibold leading-snug mb-1 text-card-foreground line-clamp-2">
                             {resource.title}
@@ -478,7 +489,8 @@ const ResourcesPage = () => {
                       <ResourceCard
                         resource={resource}
                         category={selectedCategoryData}
-                        isPmaMember={isPmaMember}
+                        locked={isLocked(resource)}
+                        showFree={showFree(resource)}
                         onOpen={trackResourceClick}
                       />
                     </AnimatedSection>
@@ -499,7 +511,8 @@ const ResourcesPage = () => {
                   <ResourceCard
                     resource={resource}
                     category={category}
-                    isPmaMember={isPmaMember}
+                    locked={isLocked(resource)}
+                    showFree={showFree(resource)}
                     showCategory
                     onOpen={trackResourceClick}
                   />
@@ -534,6 +547,7 @@ const ResourcesPage = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         {category.resources.length} resources
+                        {!isPmaMember && ` · ${category.resources.filter((r) => r.isPreview).length} free`}
                       </span>
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
